@@ -1,0 +1,60 @@
+#!/bin/sh
+###########################################################################
+# This script to change the SID and its environment.
+# VD  01/08/00  
+# PET 01/26/04 - Modified to use only grep and eliminate the loop                    
+#                reduces run time from 2.5sec to .09 sec 
+# RSC 09/11/07   Change CLASSPATH to exclude the erroneous path (has product).
+# DSB 04/01/09 - Added +o nounset to prevent error on HP
+# VD  06/01/09 - Modified to take either lower or upper case SID   
+#########################################################################
+# by default, consider all variables that have not been set, to be null versus unset
+# this prevents an error on HP where the variable hasn't been set and then is referred to
+set +o nounset
+
+ORADIR=/etc
+
+SID=$1
+##SID=`echo $SID | tr '[a-z]' '[A-Z]'`
+SID=`echo $SID`
+
+if [ "$SID" = "" ]; then
+   echo ""
+   echo "Usage: setdb SID "
+   echo ""
+else
+
+   sid_entry=`grep "$SID" $ORADIR/oratab | awk -F: '{ print $1; }'`
+
+   if [ "$sid_entry" = "$SID" ]  
+   then
+      ORACLE_SID=`grep $sid_entry /etc/oratab | awk -F: '{ print $1; }'`
+      ORACLE_HOME=`grep $sid_entry /etc/oratab | awk -F: '{ print $2; }'`
+      export ORACLE_HOME
+      export ORACLE_SID
+
+      echo ""
+      echo "Env vars changed to the following: "
+      echo "ORACLE_HOME:  $ORACLE_HOME"
+      echo "ORACLE_SID:   $ORACLE_SID"
+      echo ""
+
+      host=`uname -n` 
+      PS1="$host $SID> " 
+
+   else
+      echo "No $SID found in /etc/oratab file"
+   fi  
+    
+fi
+
+
+# re-set ORA_NLS33, TNS_ADMIN, LD_LIBRARY_PATH, CLASSPATH  
+
+ORA_NLS33=$ORACLE_HOME/ocommon/nls/admin/data
+TNS_ADMIN=$ORACLE_HOME/network/admin
+LD_LIBRARY_PATH=$ORACLE_HOME/lib:/opt/lib/cobol/coblib:/opt/lib/cobol/lib
+CLASSPATH=$ORACLE_HOME/jlib    
+PATH=$ORACLE_HOME/bin:$PATH
+export ORA_NLS33 TNS_ADMIN  CLASSPATH PATH LD_LIBRARY_PATH
+

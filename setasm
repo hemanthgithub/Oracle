@@ -1,0 +1,39 @@
+#!/bin/ksh 
+#
+# set the env for asm maintenance
+#
+# parm 1 = asm instance number - 1 or 2 or 0 for stand-alone
+
+# DSB 10/23/09 created 
+# RJM 06/13/12 Updated for 11gR2 
+
+set +o nounset
+
+show_syntax ()
+{
+	echo
+	echo Error occurred - resolve and retry...
+	echo
+	echo Syntax = 
+	echo
+	echo "setasm <asm inst #, 0 for stand-alone>"
+	echo
+	return 1
+}
+
+if [ $# = 1 ]; then
+	case $1 in
+	1 | 2 ) . asm11gr2setup
+		. setdb +ASM$1
+		;;
+	    0 ) . asm11gr2setup
+		. setdb +ASM
+		;;
+	    * ) show_syntax
+		;;
+	esac
+else
+	show_syntax
+fi
+
+
